@@ -1,6 +1,89 @@
 # Reinforment Learning: Policy-based Algorithms
 
+### Intro
 
+There are two basic types of approaches allowing agents to learn good behavior, policy gradient and value functions.
+
+#### Policy Gradient
+
+The neural network learns a policy for picking actions by adjusting it's weights through gradient descent using feedback from the environment.
+
+#### Value function
+
+The agent learns to predict how good a given state or action will be for the agent to be in.
+
+### Four-Armed Bandit Example
+
+```python
+bandits = [0.2,0,-0.2,-5]
+num_bandits = len(bandits)
+def pullBandit(bandit):
+    result = np.random.randn(1)
+    if result > bandit:
+        return 1
+    else:
+        return -1
+    
+tf.reset_default_graph()
+
+weights = tf.Variable(tf.ones([num_bandits]))  # This initialization is one of best
+chosen_action = tf.argmax(weights,0)
+
+reward_holder = tf.placeholder(shape=[1],dtype=tf.float32)  # Current reward
+action_holder = tf.placeholder(shape=[1],dtype=tf.int32)  # Current action
+responsible_weight = tf.slice(weights,action_holder,[1])  # The weights of current action
+loss = -(tf.log(responsible_weight)*reward_holder)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+update = optimizer.minimize(loss)
+
+total_episodes = 1000
+total_reward = np.zeros(num_bandits)
+e = 0.1
+
+init = tf.initialize_all_variables()
+
+with tf.Session() as sess:
+    sess.run(init)
+    i = 0
+    while i < total_episodes:
+        
+        if np.random.rand(1) < e:
+            action = np.random.randint(num_bandits)
+        else:
+            action = sess.run(chosen_action)
+        reward = pullBandit(bandits[action])
+        
+        _,resp,ww = sess.run([update,responsible_weight,weights], feed_dict={reward_holder:[reward],action_holder:[action]})
+        
+        total_reward[action] += reward
+        if i % 50 == 0:
+            print "Running reward for the " + str(num_bandits) + " bandits: " + str(total_reward)
+        i+=1
+        
+print "The agent thinks bandit " + str(np.argmax(ww)+1) + " is the most promising...."
+if np.argmax(ww) == np.argmax(-np.array(bandits)):
+    print "...and it was right!"
+else:
+    print "...and it was wrong!"
+```
+
+The network would consists of a set of weights, and would represent how good our agent thinks it is to pull each arm. If we initialize these weights to 1, then our agent will be somewhat optimistic about each arm's potential reward.
+
+To update our network, we will simply try an arm with an **e-greedy** policy. This means that **most of the time our agent will choose the action that corresponds to the largest expected value, but occasionally, with e probability, it will choose randomly**. In this way, the agent can **try out each of the different arms to continue to learn more about them**. Once our agent has taken an action, it then receives a reward of either 1 or -1. With this reward, we can then make an **update to our network using the policy loss equation**
+$$
+Loss = Log(\pi) * A
+$$
+$A$ is advantage, and is an essential aspect of all reinforcement learning algorithms. Intuitively it corresponds to how much better an action was than some baseline. In this case, we assume the baseline is 0, hence advantage is the reward we recieved for each action.
+
+$\pi$ is the policy. In this case, it corresponds to the chosen action's weight.
+
+Intuitively, this loss function allows us to increase the weight for actions that yielded a positive reward, and decrease them for actions that yielded a negative word.
+
+### Contextual Bandit
+
+![](/assets/contextual_bandits.png)
+
+Contextual Bandits introduce the concept of the **state**. **The state consists of a description of the environment that the agent can use to take more informed actions**. The objective function of this problem is to maximize many bandits, whereas the former case is to maximize a single bandits.
 
 ### Markov Chain
 
@@ -51,4 +134,10 @@ A MDP is a reinterpretation of Markov chains which includes an **agent** and a *
 [Dissecting Reinforcement Learning-Part.1](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)
 
 [Simple Reinforcement Learning with Tensorflow Part 0: Q-Learning with Tables and Neural Networks](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
+
+[Simple Reinforcement Learning in Tensorflow: Part 1 - Two-armed Bandit](https://medium.com/@awjuliani/super-simple-reinforcement-learning-tutorial-part-1-fd544fab149)
+
+[Simple Reinforcement Learning with Tensorflow Part 1.5: Contextual Bandits](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-1-5-contextual-bandits-bff01d1aad9c)
+
+[Simple Reinforcement Learning with Tensorflow: Part 2 - Policy-based Agents](https://medium.com/@awjuliani/super-simple-reinforcement-learning-tutorial-part-2-ded33892c724)
 
