@@ -127,7 +127,36 @@ A MDP is a reinterpretation of Markov chains which includes an **agent** and a *
 2.  Initial State: $s_0$
 3.  Set of possible Actions: $A = \{a_0, a_1, ..., a_m \}$
 4.  Transition Model: $T(s, a, s')$
-5.  Reward Function: $R(s)$
+5.  Reward Function: $R(s, a)$
+
+As such, at any time in an MDP, an agent is given a state $s$, takes action $a$, and receives new state $s'$ and reward $r$, and the main distinction of MDP with Markov Chain is that the **transition model depends on the current state, the next state and the action of agent**. The transition model returns the probability of reaching the state $s'$ if the action $\alpha$ is done in state $s$. But given $s$ and $a$ the model is conditionally independent of all previous states and actions
+
+Hence the problem changes to the agent has to **maximise the reward avoiding states which return negative values and choosing the one which return positive value**. The solution is to **find a policy $\pi(s)$ which returns the action with the highest reward**
+
+### The Bellman Equation
+
+The bellman equation is the solution of **how the agent choose the best policy**. First of all we have to find a way to compare two policies.
+$$
+U(s) = E[\sum^{\infty}_{t=0}\gamma^tR(s_t)] = R(s_0) +\gamma R(s_1) + ... + \gamma^nR(s_n)
+$$
+Then, the utility of a state $s$ is correlated with the utility of its neighbors at $s'$
+$$
+U(s) = R(s) +\gamma max_{a}\sum_{s'}T(s, a, s')U(s')
+$$
+E.g.
+
+
+
+### Cart-Pole
+
+> A pole is attached by an un-actuated joint to a cart, which moves along a frictionless track. The system is controlled by applying a force of +1 or -1 to the cart. The pendulum starts upright, and the goal is to prevent it from falling over. A reward of +1 is provided for every timestep that the pole remains upright. The episode ends when the pole is more than 15 degrees from vertical, or the cart moves more than 2.4 units from the center.
+>
+> CartPole-v0 defines "solving" as getting average reward of 195.0 over 100 consecutive trials.
+
+This task requires:
+
+* observations: The agent needs to know where pole currently is, and the angle at which it is balancing. To accomplish this, our neural network will take an observation and use it when producing the probability of an action
+* Delayed reward: Keeping the pole in the air as long as possible means moving in ways that will be advantageous for both the present and the future. To accomplish this we will adjust the reward value for each observation-action pair using a function that weighs actions over time
 
 ### Reference 
 
@@ -140,4 +169,6 @@ A MDP is a reinterpretation of Markov chains which includes an **agent** and a *
 [Simple Reinforcement Learning with Tensorflow Part 1.5: Contextual Bandits](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-1-5-contextual-bandits-bff01d1aad9c)
 
 [Simple Reinforcement Learning with Tensorflow: Part 2 - Policy-based Agents](https://medium.com/@awjuliani/super-simple-reinforcement-learning-tutorial-part-2-ded33892c724)
+
+[CartPole-v0](https://gym.openai.com/envs/CartPole-v0)
 
